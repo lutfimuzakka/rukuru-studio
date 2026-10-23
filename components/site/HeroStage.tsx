@@ -2,7 +2,7 @@
 
 import Link from 'next/link'
 import { useEffect, useLayoutEffect, useRef, useState } from 'react'
-import { gsap, prefersReducedMotion } from '@/components/motion/gsap'
+import { gsap, prefersReducedMotion, ScrollTrigger } from '@/components/motion/gsap'
 import { SpreadHeadline } from '@/components/motion/SpreadHeadline'
 import type { Media as MediaType } from '@/lib/content'
 import { Media } from './Media'
@@ -28,26 +28,54 @@ export function HeroStage({ intro, media }: { intro: string; media: MediaType })
 
   useLayoutEffect(() => {
     if (!animated || !stage.current || !head.current || !opening.current) return
-    const [top, bottom] = Array.from(head.current.querySelectorAll<HTMLElement>('[data-line]'))
+    const headEl = head.current
+    const openEl = opening.current
+    const [top, bottom] = Array.from(headEl.querySelectorAll<HTMLElement>('[data-line]'))
     if (!top || !bottom) return
-    const gutter = () => parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--gutter')) || 24
-    const lineH = () => top.offsetHeight
-    // Resting: lines meet at the vertical centre. Final: top line under the
-    // header, bottom line on the bottom gutter.
-    const topTravel = () => HEADER + 8 - (window.innerHeight / 2 - lineH())
-    const bottomTravel = () => window.innerHeight - gutter() - lineH() - window.innerHeight / 2
+
+    // Everything is measured from layout values (offsetTop/offsetHeight), which
+    // ignore transforms, so it stays correct with any font and on every resize.
+    const g = { topRest: 0, bottomRest: 0, topFinal: 0, bottomFinal: 0, seam: 0, openTop: 0, openBottom: 0 }
+    const measure = () => {
+      const vh = window.innerHeight
+      const gutter = parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--gutter')) || 24
+      const headTop = headEl.offsetTop - headEl.offsetHeight / 2 // element is centred with translateY(-50%)
+      g.topRest = headTop + top.offsetTop
+      g.bottomRest = headTop + bottom.offsetTop
+      g.topFinal = HEADER + 8
+      g.bottomFinal = vh - gutter - bottom.offsetHeight
+      // The seam: halfway between the two resting lines.
+      g.seam = (g.topRest + top.offsetHeight + g.bottomRest) / 2
+      g.openTop = g.topFinal + top.offsetHeight + GAP
+      g.openBottom = g.bottomFinal - GAP
+      openEl.style.top = `${g.openTop}px`
+      openEl.style.height = `${Math.max(0, g.openBottom - g.openTop)}px`
+    }
+    measure()
 
     const ctx = gsap.context(() => {
       const tl = gsap.timeline({
         defaults: { ease: 'power2.inOut' },
-        scrollTrigger: { trigger: stage.current, start: 'top top', end: 'bottom bottom', scrub: 0.8, invalidateOnRefresh: true },
+        scrollTrigger: {
+          trigger: stage.current,
+          start: 'top top',
+          end: 'bottom bottom',
+          scrub: 0.8,
+          invalidateOnRefresh: true,
+          onRefreshInit: measure,
+        },
       })
+      // Opening starts as a hairline exactly on the seam and grows with the lines.
+      const closed = () => `inset(${g.seam - g.openTop}px 0px ${g.openBottom - g.seam}px 0px)`
       tl.to(copy.current, { opacity: 0, y: 24, ease: 'none', duration: 0.18 }, 0)
-        .to(top, { y: () => topTravel(), duration: 1 }, 0)
-        .to(bottom, { y: () => bottomTravel(), duration: 1 }, 0)
-        .fromTo(opening.current, { clipPath: 'inset(50% 0% 50% 0%)' }, { clipPath: 'inset(0% 0% 0% 0%)', duration: 1 }, 0)
-        .fromTo(opening.current!.firstElementChild, { scale: 1.25 }, { scale: 1, duration: 1 }, 0)
+        .to(top, { y: () => g.topFinal - g.topRest, duration: 1 }, 0)
+        .to(bottom, { y: () => g.bottomFinal - g.bottomRest, duration: 1 }, 0)
+        .fromTo(openEl, { clipPath: closed }, { clipPath: 'inset(0px 0px 0px 0px)', duration: 1 }, 0)
+        .fromTo(openEl.firstElementChild, { scale: 1.25 }, { scale: 1, duration: 1 }, 0)
     }, stage)
+
+    // Re-measure once Adobe Fonts has loaded, since line heights can change.
+    document.fonts?.ready.then(() => ScrollTrigger.refresh())
     return () => ctx.revert()
   }, [animated])
 
@@ -80,9 +108,6 @@ export function HeroStage({ intro, media }: { intro: string; media: MediaType })
     )
   }
 
-  // Line height of the display type: 0.92 × font size (see .t-display).
-  const lineHeight = 'calc(var(--hero-fs) * 0.92)'
-
   return (
     <div
       ref={stage}
@@ -93,11 +118,7 @@ export function HeroStage({ intro, media }: { intro: string; media: MediaType })
         <div
           ref={opening}
           className="absolute inset-x-[var(--gutter)] overflow-hidden"
-          style={{
-            top: `calc(${HEADER + 8 + GAP}px + ${lineHeight})`,
-            bottom: `calc(var(--gutter) + ${GAP}px + ${lineHeight})`,
-            clipPath: 'inset(50% 0% 50% 0%)',
-          }}
+          style={{ clipPath: 'inset(50% 0% 50% 0%)' }}
           data-cursor="Work"
         >
           <div className="absolute inset-0 [&>*]:!aspect-auto [&>*]:h-full [&_img]:object-cover">
