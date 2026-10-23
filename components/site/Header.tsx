@@ -25,8 +25,8 @@ export function Header() {
   return (
     <ViewTransition name="site-header">
       <header className={`wrap fixed inset-x-0 top-0 z-50 flex items-center justify-between py-5 transition-colors duration-200 ${open ? 'text-paper' : 'bg-paper/85 text-ink backdrop-blur-md'}`}>
-        <Link href="/" className="text-[1.35rem] font-[720] tracking-[-0.03em]" style={{ fontStretch: '80%' }} aria-label="Rukuru Studio, home">
-          Rukuru Studio
+        <Link href="/" className="font-[family-name:var(--font-display)] text-[1.05rem] font-bold uppercase leading-[0.95] tracking-[-0.01em]" aria-label="Rukuru Studio, home">
+          Rukuru<br />Studio
         </Link>
 
         <nav aria-label="Main" className="hidden items-center gap-8 md:flex">

@@ -14,6 +14,7 @@ export function SmoothScroll() {
     if (prefersReducedMotion()) return
     const instance = new Lenis({ lerp: 0.1, wheelMultiplier: 1 })
     lenis.current = instance
+    ;(window as Window & { __lenis?: Lenis }).__lenis = instance
     instance.on('scroll', ScrollTrigger.update)
     const tick = (time: number) => instance.raf(time * 1000)
     gsap.ticker.add(tick)
@@ -22,6 +23,7 @@ export function SmoothScroll() {
       gsap.ticker.remove(tick)
       instance.destroy()
       lenis.current = null
+      delete (window as Window & { __lenis?: Lenis }).__lenis
     }
   }, [])
 

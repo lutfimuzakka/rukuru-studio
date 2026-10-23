@@ -15,7 +15,7 @@ export default async function SiteLayout({ children }: { children: React.ReactNo
       <SmoothScroll />
       <Header />
       <ViewTransition>
-        <main id="main" className="pt-24">
+        <main id="main" tabIndex={-1} className="pt-24 outline-none">
           {children}
         </main>
       </ViewTransition>

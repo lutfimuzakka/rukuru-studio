@@ -1,42 +1,27 @@
 import Link from 'next/link'
 import { Reveal } from '@/components/motion/Reveal'
-import { RotatingWords } from '@/components/motion/RotatingWords'
-import { Media } from '@/components/site/Media'
+import { SpreadHeadline } from '@/components/motion/SpreadHeadline'
+import { HeroStage } from '@/components/site/HeroStage'
 import { ProjectCard } from '@/components/site/ProjectCard'
 import { getFeaturedProjects, getServices, getSettings } from '@/lib/content'
 
 export default async function HomePage() {
   const [settings, projects, services] = await Promise.all([getSettings(), getFeaturedProjects(), getServices()])
+  // Showreel when set in Sanity, otherwise the first featured project's hero.
+  const heroMedia = settings.showreel ?? projects[0]?.heroMedia ?? { alt: 'Showreel coming soon', ratio: 16 / 9 }
 
   return (
     <>
-      {/* Hero: the one loud moment on the site. */}
-      <section className="wrap flex min-h-[calc(100svh-6rem)] flex-col justify-between pb-10">
-        <h1 className="t-display mt-[8vh]">
-          <Reveal as="span" variant="lines" immediate className="block">
-            Ideas become brands here.
-          </Reveal>
-          <RotatingWords words={settings.taglineWords} />
-        </h1>
-        <div className="mt-16 flex flex-col gap-6 md:flex-row md:items-end md:justify-between">
-          <Reveal as="p" immediate delay={0.4} className="t-lead measure max-w-[34ch]">
-            A branding studio in {settings.city}. Strategy, identity, content and campaigns for people with an idea worth remembering.
-          </Reveal>
-          <Reveal immediate delay={0.55}>
-            <Link href="/work" className="link t-h3 w-fit whitespace-nowrap">
-              See the work
-            </Link>
-          </Reveal>
-        </div>
-      </section>
+      {/* Hero: spread headline, visual grows on scroll (after wearemotto.com). */}
+      <HeroStage intro={`A branding studio in ${settings.city}. Strategy, identity, content and campaigns for people with an idea worth remembering.`} media={heroMedia} />
 
-      {settings.showreel && (
-        <section className="wrap" aria-label="Showreel">
-          <Reveal variant="media">
-            <Media media={settings.showreel} priority />
-          </Reveal>
-        </section>
-      )}
+      {/* Statement: words gather in the middle and spread as it scrolls in. */}
+      <section className="wrap mt-24 md:mt-40" aria-label="Simple. Strategic. Unforgettable.">
+        <SpreadHeadline
+          lines={settings.taglineWords.length === 3 ? [[settings.taglineWords[0], settings.taglineWords[1]], [settings.taglineWords[2]]] : [settings.taglineWords]}
+          className="t-display !text-[clamp(2.1rem,9.4vw,10.5rem)]"
+        />
+      </section>
 
       {/* Selected work: asymmetric two-column rhythm, the first piece largest. */}
       <section className="wrap mt-24 md:mt-40" aria-labelledby="work-heading">
