@@ -1,26 +1,183 @@
 @import "tailwindcss";
 
+/* ───────────────── Design tokens ─────────────────
+   One bold colour (ultramarine), used sparingly: page transitions,
+   the active link, the cursor, focus. Everything else is paper and ink. */
 :root {
-  --background: #ffffff;
-  --foreground: #171717;
+  --paper: #f5f5f2;
+  --ink: #101014;
+  --ultramarine: #3a2eff;
+  --stone: #8a8a93;
+  --line: #d9d9d4;
+  --lilac: #dcd9ff;
+
+  /* Motion tokens — every animation uses these. */
+  --ease-out: cubic-bezier(0.22, 1, 0.36, 1);
+  --ease-in-out: cubic-bezier(0.65, 0, 0.35, 1);
+  --dur-fast: 200ms;
+  --dur-base: 600ms;
+  --dur-slow: 1000ms;
+
+  --gutter: clamp(16px, 3vw, 40px);
 }
 
 @theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
+  --color-paper: var(--paper);
+  --color-ink: var(--ink);
+  --color-ultramarine: var(--ultramarine);
+  --color-stone: var(--stone);
+  --color-line: var(--line);
+  --color-lilac: var(--lilac);
+  --font-sans: "Bricolage Grotesque Variable", ui-sans-serif, system-ui, sans-serif;
+  --ease-out-expo: var(--ease-out);
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
+/* ───────────────── Base ───────────────── */
+html {
+  background: var(--paper);
+  color: var(--ink);
+  font-family: var(--font-sans);
+  font-optical-sizing: auto;
+  -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
 }
 
 body {
-  background: var(--background);
-  color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+  font-size: 17px;
+  line-height: 1.5;
+  font-variation-settings: "wdth" 100;
+}
+
+::selection {
+  background: var(--ultramarine);
+  color: var(--paper);
+}
+
+:focus-visible {
+  outline: 2px solid var(--ultramarine);
+  outline-offset: 3px;
+  border-radius: 2px;
+}
+
+/* Type scale (perfect fourth, ~1.333), display set condensed + tight. */
+.t-display {
+  font-size: clamp(3.25rem, 11.5vw, 12rem);
+  line-height: 0.88;
+  font-weight: 760;
+  font-stretch: 78%;
+  letter-spacing: -0.035em;
+}
+.t-h1 {
+  font-size: clamp(2.5rem, 7vw, 6.5rem);
+  line-height: 0.92;
+  font-weight: 720;
+  font-stretch: 80%;
+  letter-spacing: -0.03em;
+}
+.t-h2 {
+  font-size: clamp(1.9rem, 4vw, 3.5rem);
+  line-height: 1;
+  font-weight: 650;
+  font-stretch: 85%;
+  letter-spacing: -0.02em;
+}
+.t-h3 {
+  font-size: clamp(1.35rem, 2vw, 1.75rem);
+  line-height: 1.15;
+  font-weight: 600;
+  letter-spacing: -0.01em;
+}
+.t-lead {
+  font-size: clamp(1.25rem, 2.2vw, 1.85rem);
+  line-height: 1.3;
+  font-weight: 420;
+  letter-spacing: -0.01em;
+}
+.t-small {
+  font-size: 0.875rem;
+  line-height: 1.45;
+}
+
+.wrap {
+  padding-inline: var(--gutter);
+}
+
+.measure {
+  max-width: 62ch;
+}
+
+/* Underline that draws left to right — the only hover treatment on text links. */
+.link {
+  background: linear-gradient(currentColor, currentColor) no-repeat 0 100% / 0% 1px;
+  transition: background-size var(--dur-fast) var(--ease-out);
+}
+.link:hover,
+.link:focus-visible {
+  background-size: 100% 1px;
+}
+
+/* Line-mask reveal used by <Reveal>; content stays visible without JS. */
+.line-mask {
+  display: block;
+  overflow: clip;
+  padding-bottom: 0.08em;
+  margin-bottom: -0.08em;
+}
+
+/* ───────────────── Page transitions ─────────────────
+   Navigations are React transitions; <ViewTransition> in the site layout
+   lets the browser animate between pages. The old page sinks and dims,
+   the new one is uncovered from the bottom by an ultramarine edge. */
+::view-transition-old(root) {
+  animation: page-out var(--dur-base) var(--ease-in-out) both;
+}
+::view-transition-new(root) {
+  animation: page-in var(--dur-slow) var(--ease-out) both;
+}
+@keyframes page-out {
+  to {
+    transform: translateY(-6vh);
+    opacity: 0.4;
+  }
+}
+@keyframes page-in {
+  from {
+    clip-path: inset(100% 0 0 0);
+    box-shadow: inset 0 14px 0 var(--ultramarine);
+  }
+  to {
+    clip-path: inset(0 0 0 0);
+  }
+}
+/* Header stays put across pages. */
+::view-transition-group(site-header) {
+  animation: none;
+}
+/* Project cover morphing into the case study hero. */
+::view-transition-group(*.morph) {
+  animation-duration: var(--dur-slow);
+  animation-timing-function: var(--ease-in-out);
+}
+
+/* Lenis */
+html.lenis,
+html.lenis body {
+  height: auto;
+}
+.lenis.lenis-smooth {
+  scroll-behavior: auto !important;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    transition-duration: 0.01ms !important;
+  }
+  ::view-transition-group(*),
+  ::view-transition-old(*),
+  ::view-transition-new(*) {
+    animation: none !important;
+  }
 }

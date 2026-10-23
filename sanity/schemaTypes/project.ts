@@ -1,0 +1,53 @@
+import { defineField, defineType } from 'sanity'
+
+export const project = defineType({
+  name: 'project',
+  title: 'Case study',
+  type: 'document',
+  groups: [
+    { name: 'overview', title: 'Overview', default: true },
+    { name: 'story', title: 'Story' },
+    { name: 'media', title: 'Media' },
+  ],
+  fields: [
+    defineField({ name: 'title', type: 'string', group: 'overview', validation: (r) => r.required() }),
+    defineField({ name: 'slug', type: 'slug', group: 'overview', options: { source: 'title' }, validation: (r) => r.required() }),
+    defineField({ name: 'client', type: 'string', group: 'overview' }),
+    defineField({ name: 'year', type: 'number', group: 'overview' }),
+    defineField({
+      name: 'services',
+      type: 'array',
+      group: 'overview',
+      of: [{ type: 'string' }],
+      options: { list: ['Strategy', 'Identity', 'Content', 'Campaign'], layout: 'grid' },
+    }),
+    defineField({ name: 'industry', type: 'string', group: 'overview' }),
+    defineField({ name: 'summary', title: 'One-line summary', type: 'string', group: 'overview', validation: (r) => r.max(140) }),
+    defineField({ name: 'accent', title: 'Accent colour (hex)', type: 'string', group: 'overview' }),
+    defineField({ name: 'featured', title: 'Show on Home', type: 'boolean', group: 'overview', initialValue: false }),
+    defineField({ name: 'order', type: 'number', group: 'overview' }),
+    defineField({
+      name: 'isPlaceholder',
+      title: 'Placeholder (hidden in production)',
+      type: 'boolean',
+      group: 'overview',
+      initialValue: false,
+    }),
+    defineField({ name: 'heroMedia', type: 'media', group: 'media' }),
+    defineField({ name: 'cardMedia', title: 'Card image (4:5)', type: 'media', group: 'media' }),
+    defineField({ name: 'hoverVideo', title: 'Hover video URL (5–8 s loop)', type: 'url', group: 'media' }),
+    defineField({ name: 'challenge', type: 'text', rows: 5, group: 'story' }),
+    defineField({ name: 'approach', type: 'text', rows: 5, group: 'story' }),
+    defineField({ name: 'solution', type: 'text', rows: 5, group: 'story' }),
+    defineField({ name: 'sections', type: 'sections', group: 'story' }),
+    defineField({ name: 'results', type: 'text', rows: 3, group: 'story' }),
+    defineField({
+      name: 'testimonial',
+      type: 'object',
+      group: 'story',
+      fields: [{ name: 'quote', type: 'text', rows: 3 }, { name: 'name', type: 'string' }, { name: 'role', type: 'string' }],
+    }),
+  ],
+  orderings: [{ title: 'Order', name: 'order', by: [{ field: 'order', direction: 'asc' }] }],
+  preview: { select: { title: 'title', subtitle: 'client', media: 'cardMedia.image' } },
+})

@@ -1,36 +1,52 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# Rukuru Studio — website
 
-## Getting Started
+Next.js 16 (App Router, Cache Components) · Tailwind 4 · GSAP + Lenis · Sanity · Vercel.
 
-First, run the development server:
+## Run it
 
 ```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
+npm install
+cp .env.example .env.local   # optional — works without any env
+npm run dev                  # http://localhost:3000
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+With no Sanity project configured, the site runs on `lib/content/placeholder.ts`:
+three placeholder case studies (Project 01–03, fictional clients, labelled media blocks).
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+## Connect Sanity
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+1. Create a project at sanity.io/manage (free), dataset `production`.
+2. Put the project ID in `.env.local` as `NEXT_PUBLIC_SANITY_PROJECT_ID`.
+3. In the Sanity project, add `http://localhost:3000` (and your Vercel URLs) under API → CORS origins, with credentials.
+4. Open `/studio` and add content. Fields missing in Sanity fall back to the local defaults.
+5. Content is cached for an hour. For instant updates, add a Sanity webhook that calls a route running `revalidateTag('content')`.
 
-## Learn More
+Mark unfinished case studies as **Placeholder** in Studio — they are hidden on the production deployment.
 
-To learn more about Next.js, take a look at the following resources:
+## Where things live
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+```
+app/(site)/            pages: Home, Work, /work/[slug], Services, About, Contact, 404
+app/studio/            embedded Sanity Studio at /studio
+components/motion/     Reveal, RotatingWords, SmoothScroll (Lenis), Cursor, GSAP setup
+components/site/       Header, Footer, Media, ProjectCard, WorkIndex, ContactForm
+components/blocks/     case-study blocks (full media, two-up, grid, text, quote, results, palette)
+lib/content/           types, placeholder content, Sanity queries
+sanity/                env, client, schemas
+app/globals.css        design + motion tokens, page transition
+```
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+## Design tokens
 
-## Deploy on Vercel
+Paper `#F5F5F2`, ink `#101014`, ultramarine `#3A2EFF` (used sparingly), stone `#8A8A93`.
+One typeface: Bricolage Grotesque (self-hosted via Fontsource), condensed and heavy for display.
+Motion: `ease-out cubic-bezier(.22,1,.36,1)`, 200 / 600 / 1000 ms, 60 ms stagger.
+All motion respects `prefers-reduced-motion`; content is readable without JavaScript.
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+## Still to do (needs real content)
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+- Replace placeholder case studies, team and studio photos.
+- Logo SVG (header currently uses a text wordmark).
+- Social profile links and the studio email (`hello@rukurustudio.com` is a placeholder).
+- Showreel video (Home shows it automatically once set in Site settings).
+- Open Graph images per page.
