@@ -7,7 +7,7 @@ import type { Project, Service, SiteSettings, TeamMember } from './types'
 export type * from './types'
 
 // Every reader below returns local placeholder content until Sanity is configured.
-// Results are cached and tagged 'content'; a Sanity webhook can call revalidateTag('content').
+// Results are cached for about a minute (tag "content"), so edits in Studio show up quickly.
 
 // Placeholders show locally and on preview links, never on the production deployment
 // (Vercel sets VERCEL_ENV=production there). SHOW_PLACEHOLDERS=true/false overrides it.
@@ -59,7 +59,7 @@ function visible(projects: Project[]) {
 async function cached() {
   'use cache'
   cacheTag('content')
-  cacheLife('hours')
+  cacheLife('minutes')
   if (!client) {
     return { projects: local.projects, services: local.services, team: local.team, settings: local.settings }
   }
