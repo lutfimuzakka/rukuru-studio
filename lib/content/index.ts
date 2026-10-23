@@ -46,7 +46,11 @@ const TEAM_QUERY = defineQuery(`*[_type == "teamMember"] | order(order asc){ nam
 const SETTINGS_QUERY = defineQuery(`*[_id == "siteSettings"][0]`)
 
 function visible(projects: Project[]) {
-  return showPlaceholders ? projects : projects.filter((p) => !p.isPlaceholder)
+  if (showPlaceholders) return projects
+  const real = projects.filter((p) => !p.isPlaceholder)
+  // While every case study is still a placeholder, show them so Work is never empty.
+  // As soon as one real case study exists, placeholders disappear from production.
+  return real.length ? real : projects
 }
 
 async function cached() {
