@@ -9,6 +9,8 @@ import { getProject, getProjects } from '@/lib/content'
 
 export async function generateStaticParams() {
   const projects = await getProjects()
+  // Cache Components needs at least one param at build time; an unknown slug renders the 404 page.
+  if (projects.length === 0) return [{ slug: 'none' }]
   return projects.map((p) => ({ slug: p.slug }))
 }
 

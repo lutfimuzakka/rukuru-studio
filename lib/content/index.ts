@@ -67,7 +67,8 @@ async function cached() {
     client.fetch<Partial<SiteSettings> | null>(SETTINGS_QUERY),
   ])
   return {
-    projects,
+    // An empty Sanity dataset falls back to the local placeholder case studies.
+    projects: projects.length ? projects : local.projects,
     services: services.length ? services : local.services,
     team,
     // Fields missing in Sanity fall back to the local defaults.
