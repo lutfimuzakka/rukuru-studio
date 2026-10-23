@@ -2,7 +2,8 @@
 
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
-import { useEffect, useState, ViewTransition } from 'react'
+import { useEffect, useLayoutEffect, useRef, useState, ViewTransition } from 'react'
+import { gsap, prefersReducedMotion } from '@/components/motion/gsap'
 
 const nav = [
   { href: '/work', label: 'Work' },
@@ -31,11 +32,16 @@ export function Header() {
     return () => window.removeEventListener('keydown', onKey)
   }, [open])
 
+  // Hysteresis: collapse after 120px, expand again above 40px, so the header
+  // never flickers when scrolling stops right at the threshold.
   useEffect(() => {
     let frame = 0
     const update = () => {
       cancelAnimationFrame(frame)
-      frame = requestAnimationFrame(() => setScrolled(window.scrollY > 80))
+      frame = requestAnimationFrame(() => {
+        const y = window.scrollY
+        setScrolled((was) => (was ? y > 40 : y > 120))
+      })
     }
     update()
     window.addEventListener('scroll', update, { passive: true })
@@ -44,6 +50,50 @@ export function Header() {
       window.removeEventListener('scroll', update)
     }
   }, [])
+
+  const collapsed = scrolled || open
+  const navWrap = useRef<HTMLDivElement>(null)
+  const menuWrap = useRef<HTMLDivElement>(null)
+  const [isDesktop, setIsDesktop] = useState(false)
+  const first = useRef(true)
+
+  useEffect(() => {
+    const mq = window.matchMedia('(min-width: 768px)')
+    const update = () => setIsDesktop(mq.matches)
+    update()
+    mq.addEventListener('change', update)
+    return () => mq.removeEventListener('change', update)
+  }, [])
+
+  // Desktop only: the links fade out right to left while their column closes,
+  // and the Menu button opens in the same movement, so nothing jumps.
+  useLayoutEffect(() => {
+    const navEl = navWrap.current
+    const menuEl = menuWrap.current
+    if (!navEl || !menuEl) return
+    if (!isDesktop) {
+      gsap.set(menuEl, { width: 'auto', opacity: 1 })
+      return
+    }
+    const links = navEl.querySelectorAll('[data-navlink]')
+    const navW = (navEl.firstElementChild as HTMLElement).scrollWidth
+    const menuW = (menuEl.firstElementChild as HTMLElement).scrollWidth
+    const instant = first.current || prefersReducedMotion()
+    first.current = false
+    const d = instant ? 0 : 0.65
+    const ease = 'power3.inOut'
+    gsap.killTweensOf([navEl, menuEl, links])
+
+    if (collapsed) {
+      gsap.to(links, { opacity: 0, y: -6, duration: instant ? 0 : 0.22, ease: 'power2.in', stagger: { each: instant ? 0 : 0.04, from: 'end' } })
+      gsap.to(navEl, { width: 0, duration: d, ease, delay: instant ? 0 : 0.08 })
+      gsap.to(menuEl, { width: menuW, opacity: 1, duration: d, ease, delay: instant ? 0 : 0.08 })
+    } else {
+      gsap.to(menuEl, { width: 0, opacity: 0, duration: d, ease })
+      gsap.to(navEl, { width: navW, duration: d, ease, onComplete: () => gsap.set(navEl, { width: 'auto' }) })
+      gsap.to(links, { opacity: 1, y: 0, duration: instant ? 0 : 0.3, ease: 'power2.out', delay: instant ? 0 : 0.3, stagger: instant ? 0 : 0.04 })
+    }
+  }, [collapsed, isDesktop])
 
   const isActive = (href: string) => pathname === href || pathname.startsWith(`${href}/`)
 
@@ -64,47 +114,49 @@ export function Header() {
           Studio
         </Link>
 
-        <div className="flex items-center gap-3 md:gap-8">
-          <nav
-            aria-label="Main"
-            aria-hidden={scrolled || undefined}
-            className={`hidden items-center gap-8 transition-[opacity,transform] duration-300 ease-[var(--ease-out)] md:flex ${
-              scrolled || open ? 'pointer-events-none -translate-y-2 opacity-0' : ''
-            }`}
-          >
-            {nav.map((item) => (
-              <Link
-                key={item.href}
-                href={item.href}
-                tabIndex={scrolled ? -1 : undefined}
-                aria-current={isActive(item.href) ? 'page' : undefined}
-                className={`link pb-0.5 ${isActive(item.href) ? 'text-ultramarine' : ''}`}
-              >
-                {item.label}
-              </Link>
-            ))}
-          </nav>
+        <div className="flex items-center">
+          <div ref={navWrap} className="hidden overflow-hidden md:block">
+            <nav aria-label="Main" aria-hidden={collapsed || undefined} className="flex items-center gap-8 whitespace-nowrap pr-8">
+              {nav.map((item) => (
+                <Link
+                  key={item.href}
+                  href={item.href}
+                  data-navlink
+                  tabIndex={collapsed ? -1 : undefined}
+                  aria-current={isActive(item.href) ? 'page' : undefined}
+                  className={`link inline-block pb-0.5 ${isActive(item.href) ? 'text-ultramarine' : ''}`}
+                >
+                  {item.label}
+                </Link>
+              ))}
+            </nav>
+          </div>
 
           <Link
             href="/contact"
-            className={`hidden rounded-full px-5 py-2.5 transition-colors duration-200 sm:inline-block ${
+            className={`hidden rounded-full px-5 py-2.5 whitespace-nowrap transition-colors duration-200 sm:inline-block ${
               open ? 'bg-paper text-ink' : 'bg-ink text-paper hover:bg-ultramarine'
             }`}
           >
             Start a project
           </Link>
 
-          <button
-            type="button"
-            aria-expanded={open}
-            aria-controls="site-menu"
-            onClick={() => setOpen((o) => !o)}
-            className={`rounded-full border px-5 py-2.5 font-medium transition-[opacity,transform,background-color,border-color] duration-300 ease-[var(--ease-out)] ${
-              open ? 'border-paper/60' : 'border-ink/25 hover:border-ink'
-            } ${scrolled || open ? '' : 'md:pointer-events-none md:hidden'}`}
-          >
-            {open ? 'Close' : 'Menu'}
-          </button>
+          <div ref={menuWrap} className="overflow-hidden md:w-0">
+            <div className="pl-3">
+              <button
+                type="button"
+                aria-expanded={open}
+                aria-controls="site-menu"
+                tabIndex={collapsed || !isDesktop ? undefined : -1}
+                onClick={() => setOpen((o) => !o)}
+                className={`rounded-full border px-5 py-2.5 font-medium whitespace-nowrap transition-colors duration-200 ${
+                  open ? 'border-paper/60' : 'border-ink/25 hover:border-ink'
+                }`}
+              >
+                {open ? 'Close' : 'Menu'}
+              </button>
+            </div>
+          </div>
         </div>
       </header>
 
