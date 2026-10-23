@@ -106,12 +106,10 @@ export function Header() {
       >
         <Link
           href="/"
-          className="font-[family-name:var(--font-display)] text-[1.05rem] font-bold uppercase leading-[0.95] tracking-[-0.01em]"
+          className="font-[family-name:var(--font-display)] text-[1.25rem] font-bold uppercase tracking-[-0.01em]"
           aria-label="Rukuru Studio, home"
         >
           Rukuru
-          <br />
-          Studio
         </Link>
 
         <div className="flex items-center">

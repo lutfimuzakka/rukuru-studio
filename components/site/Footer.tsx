@@ -23,36 +23,40 @@ function Column({ title, children }: { title: string; children: React.ReactNode 
 }
 
 /**
- * Two parts, after orkha.id: a full-bleed ultramarine call to action,
- * then a light four-column footer with a bottom bar.
+ * A quiet call to action after fleava.com ("Let's talk." over a rule),
+ * then a four-column footer after orkha.id, and a bottom bar.
  */
 export function Footer({ settings }: { settings: SiteSettings }) {
   const wa = `https://wa.me/${settings.whatsapp}`
   return (
     <footer className="mt-32 md:mt-48">
-      <Link
-        href="/contact"
-        className="group wrap block bg-ultramarine py-20 text-center text-paper md:py-28"
-        data-cursor="Start"
-      >
-        <Reveal as="span" variant="lines" className="t-h1 mx-auto block max-w-[16ch]">
-          Let&rsquo;s build your brand.
-        </Reveal>
-        <span className="mt-6 inline-block border-b border-paper/50 pb-0.5 transition-colors duration-200 group-hover:border-paper">
-          Start a project
-        </span>
-      </Link>
+      {/* Call to action, after fleava.com: one large line with a rule under it. */}
+      <div className="wrap border-t border-line pt-24 pb-20 md:pt-32 md:pb-28">
+        <Link href="/contact" className="group inline-block max-w-full" data-cursor="Talk">
+          <Reveal as="span" variant="lines" className="t-display block">
+            Let&rsquo;s talk.
+          </Reveal>
+          <span aria-hidden className="relative mt-4 block h-[2px] w-full overflow-hidden bg-ink/80 md:mt-6">
+            <span className="absolute inset-0 origin-left scale-x-0 bg-ultramarine transition-transform duration-700 ease-[var(--ease-out)] group-hover:scale-x-100" />
+          </span>
+        </Link>
+        <p className="mt-8 max-w-[36ch] text-stone">
+          Tell us about the idea. We reply within two working days, or faster on{' '}
+          <a href={wa} className="link text-ink">
+            WhatsApp
+          </a>
+          .
+        </p>
+      </div>
 
-      <div className="wrap grid grid-cols-2 gap-x-8 gap-y-12 py-16 md:py-20 lg:grid-cols-12">
+      <div className="wrap grid grid-cols-2 gap-x-8 gap-y-12 pb-16 md:pb-20 lg:grid-cols-12">
         <div className="col-span-2 lg:col-span-3">
           <Link
             href="/"
-            className="font-[family-name:var(--font-display)] text-[1.35rem] font-bold uppercase leading-[0.95] tracking-[-0.01em]"
+            className="font-[family-name:var(--font-display)] text-[1.35rem] font-bold uppercase tracking-[-0.01em]"
             aria-label="Rukuru Studio, home"
           >
             Rukuru
-            <br />
-            Studio
           </Link>
           <p className="mt-5 max-w-[26ch] text-stone">{settings.tagline} Simple. Strategic. Unforgettable.</p>
         </div>
