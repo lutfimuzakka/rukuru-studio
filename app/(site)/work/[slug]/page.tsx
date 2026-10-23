@@ -31,6 +31,7 @@ export default async function CaseStudyPage({ params }: PageProps<'/work/[slug]'
     { title: 'Challenge', body: project.challenge },
     { title: 'Approach', body: project.approach },
     { title: 'Solution', body: project.solution },
+    { title: 'Results', body: project.results },
   ].filter((s) => s.body)
 
   return (

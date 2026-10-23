@@ -15,34 +15,37 @@ const showPlaceholders = process.env.SHOW_PLACEHOLDERS
   ? process.env.SHOW_PLACEHOLDERS === 'true'
   : process.env.VERCEL_ENV !== 'production'
 
-const MEDIA = `{
-  "src": image.asset->url,
-  "video": videoUrl,
-  alt,
-  "ratio": coalesce(image.asset->metadata.dimensions.aspectRatio, 16/9),
-  "tone": image.asset->metadata.palette.muted.background
+// Always returns an object, even when the field is empty in Sanity, so pages
+// render a labelled placeholder block instead of failing.
+const media = (path: string, ratio: string, alt = '"Image coming soon"') => `{
+  "src": ${path}.image.asset->url,
+  "video": ${path}.videoUrl,
+  "alt": coalesce(${path}.alt, ${alt}),
+  "ratio": coalesce(${path}.image.asset->metadata.dimensions.aspectRatio, ${ratio}),
+  "tone": ${path}.image.asset->metadata.palette.muted.background
 }`
 
 const PROJECT = `{
-  "slug": slug.current, title, client, year, services, industry, summary,
+  "slug": slug.current, title, "client": coalesce(client, title), year, industry, "summary": coalesce(summary, ""),
   "accent": coalesce(accent, "#3A2EFF"),
-  "heroMedia": heroMedia${MEDIA}, "cardMedia": cardMedia${MEDIA}, hoverVideo,
+  "heroMedia": ${media('heroMedia', '16/9', 'title')}, "cardMedia": ${media('cardMedia', '4/5', 'title')}, hoverVideo,
   challenge, approach, solution, results, testimonial,
-  "sections": sections[]{
+  "services": coalesce(services, []),
+  "sections": coalesce(sections[]{
     ..., _type, _key,
-    _type == "fullMedia" => { "media": media${MEDIA} },
-    _type == "twoUp" => { "left": left${MEDIA}, "right": right${MEDIA} },
-    _type == "grid" => { "items": items[]${MEDIA} }
-  },
+    _type == "fullMedia" => { "media": ${media('media', '16/9')} },
+    _type == "twoUp" => { "left": ${media('left', '4/5')}, "right": ${media('right', '4/5')} },
+    _type == "grid" => { "items": items[]${media('@', '1')} }
+  }, []),
   "featured": coalesce(featured, false), "order": coalesce(order, 99),
   "isPlaceholder": coalesce(isPlaceholder, false)
 }`
 
 const PROJECTS_QUERY = defineQuery(`*[_type == "project" && defined(slug.current)] | order(order asc) ${PROJECT}`)
 const SERVICES_QUERY = defineQuery(
-  `*[_type == "service"] | order(order asc){ "slug": slug.current, title, description, deliverables, "relatedProjects": relatedProjects[]->slug.current, order }`,
+  `*[_type == "service"] | order(order asc){ "slug": slug.current, title, description, "deliverables": coalesce(deliverables, []), "relatedProjects": coalesce(relatedProjects[]->slug.current, []), order }`,
 )
-const TEAM_QUERY = defineQuery(`*[_type == "teamMember"] | order(order asc){ name, role, "photo": photo${MEDIA}, bio }`)
+const TEAM_QUERY = defineQuery(`*[_type == "teamMember"] | order(order asc){ name, role, "photo": ${media('photo', '4/5', 'name')}, bio }`)
 const SETTINGS_QUERY = defineQuery(`*[_id == "siteSettings"][0]`)
 
 function visible(projects: Project[]) {
