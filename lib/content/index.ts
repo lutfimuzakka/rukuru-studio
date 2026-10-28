@@ -46,7 +46,10 @@ const SERVICES_QUERY = defineQuery(
   `*[_type == "service"] | order(order asc){ "slug": slug.current, title, description, "deliverables": coalesce(deliverables, []), "relatedProjects": coalesce(relatedProjects[]->slug.current, []), order }`,
 )
 const TEAM_QUERY = defineQuery(`*[_type == "teamMember"] | order(order asc){ name, role, "photo": ${media('photo', '4/5', 'name')}, bio }`)
-const SETTINGS_QUERY = defineQuery(`*[_id == "siteSettings"][0]`)
+// Showreel is projected like any other media (URL, ratio, video); empty → null.
+const SETTINGS_QUERY = defineQuery(
+  `*[_id == "siteSettings"][0]{..., "showreel": select(defined(showreel.image.asset) || defined(showreel.videoUrl) => ${media('showreel', '16/9', '"Showreel"')}, null)}`,
+)
 
 function visible(projects: Project[]) {
   if (showPlaceholders) return projects
